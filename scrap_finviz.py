@@ -23,6 +23,7 @@ def scrap_finviz(strategyNum, *url):
     currentPageIndex = 0
     # collect all the text data in a list
     text_data = []
+    header_text_data = []
 
     while hasNextPage: 
         if not firstPage:
@@ -48,8 +49,16 @@ def scrap_finviz(strategyNum, *url):
         # 220 is derrived from 20 stocks in a single page * 11 columns
         # anything lesser than 220 implies that page is not full (i.e. no next page)
         if counter < 220:
-            hasNextPage = False       
+            hasNextPage = False    
 
+        header_data = soup.find_all('td', {'class': ['table-top','table-top-s']})
+        counter2 = 0 
+        for column in header_data:
+            counter2+= 1
+            header_text_data.append(column.get_text())
+        
+        num_of_columns = len(header_text_data)
+        
     # takes as input text_data array and outputs list of lists
     # each list contains information about one stock
     def helper(data):
@@ -58,7 +67,7 @@ def scrap_finviz(strategyNum, *url):
         temp_list = []
         for elem in data:
             # end of each stock
-            if counter % 11 == 0:
+            if counter % num_of_columns == 0:
                 # add currently filled temp_list to list_of_lists if not empty
                 if temp_list: 
                     list_of_lists.append(temp_list)
@@ -78,19 +87,14 @@ def scrap_finviz(strategyNum, *url):
     for each_stock in stock_data:
         del each_stock[0]
         
-    labels = ['Ticker', 'Company', 'Sector', 'Industry', 'Country', 'Market Cap', 'P/E', 'Price', '% Change', 'Volume']
-    df = pd.DataFrame.from_records(stock_data, columns=labels)
+    del header_text_data[0]
+    df = pd.DataFrame.from_records(stock_data, columns=header_text_data)
     # date of retrieval
     print(str(datetime.now())) 
     # time taken to retrieve data
     print('Time taken to draw data: ' + str(round(time.time() - start_time, 2)) + ' seconds')
     # save as csv file
-    df.to_csv('/Users/ZengHou/Desktop/Stock Strategies/finviz_data_strategy' + str(strategyNum) + '.csv', index=False)
+    df.to_csv('/Users/johncalabrese/Desktop/' + str(strategyNum) + '.csv', index=False)
     return df
-
-
-    
-
-
 
 
